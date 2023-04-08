@@ -1,31 +1,37 @@
 import throttle from 'lodash.throttle';
 
-const feedbackForm = document.querySelector(".feedback-form");
-const FORM_KEY = "feedback-form-state";
+const LOCAL_KEY = 'feedback-form-state';
 
-const onFormInput = () => {
-    const formData = new FormData(feedbackForm);
-    let userForm = {};
-    formData.forEach((value, name) => userForm[name] = value.trim());
-    localStorage.setItem(FORM_KEY, JSON.stringify(userForm));
-};
+form = document.querySelector('.feedback-form');
 
-feedbackForm.addEventListener("input", throttle(onFormInput, 500));
+form.addEventListener('input', throttle(onInputData, 500));
+form.addEventListener('submit', onFormSubmit);
 
-const onPopulateForm = () => {
-    if (localStorage.getItem(FORM_KEY)) {
-        Object.entries(JSON.parse(localStorage.getItem(FORM_KEY))).forEach(([name, value]) => feedbackForm.elements[name].value = value);    }
-};
+let dataForm = JSON.parse(localStorage.getItem(LOCAL_KEY)) || {};
+const { email, message } = form.elements;
+reloadPage();
 
-onPopulateForm();
+function onInputData(e) {
+  dataForm = { email: email.value, message: message.value };
+  localStorage.setItem(LOCAL_KEY, JSON.stringify(dataForm));
+}
 
-const onFormSubmit = event => {
-    event.preventDefault();
-    if (feedbackForm.elements.email.value && feedbackForm.elements.message.value !== "") {
-        console.log('Відправляємо форму з даними: ', JSON.parse(localStorage.getItem(FORM_KEY)));
-        event.currentTarget.reset();
-        localStorage.removeItem(FORM_KEY);
-    };
-};
-  
-feedbackForm.addEventListener("submit", onFormSubmit);
+function reloadPage() {
+  if (dataForm) {
+    email.value = dataForm.email || '';
+    message.value = dataForm.message || '';
+  }
+}
+
+function onFormSubmit(e) {
+  e.preventDefault();
+  console.log({ email: email.value, message: message.value });
+
+  if (email.value === '' || message.value === '') {
+    return alert('Please fill in all the fields!');
+  }
+
+  localStorage.removeItem(LOCAL_KEY);
+  e.currentTarget.reset();
+  dataForm = {};
+}
